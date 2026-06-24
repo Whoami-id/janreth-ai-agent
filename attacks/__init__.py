@@ -12,9 +12,12 @@ from attacks import (
     a02_indirect_injection,
     a03_tool_abuse,
     a04_privilege_escalation,
+    a05_rce_egress,
     a06_memory_poisoning,
+    a07_rogue_agent,
     a08_secret_exfil,
     a09_hitl_bypass,
+    a10_audit_repudiation,
 )
 from attacks.runner import AttackResult, ETHICAL_NOTE
 
@@ -23,9 +26,12 @@ ATTACKS = [
     a02_indirect_injection,
     a03_tool_abuse,
     a04_privilege_escalation,
+    a05_rce_egress,
     a06_memory_poisoning,
+    a07_rogue_agent,
     a08_secret_exfil,
     a09_hitl_bypass,
+    a10_audit_repudiation,
 ]
 
 

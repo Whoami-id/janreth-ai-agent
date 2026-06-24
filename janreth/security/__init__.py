@@ -10,21 +10,32 @@ Two entry points:
     agent = Agent(model=..., tools=[...], **secure_defaults())  # callbacks only
 
 `secure_agent()` also applies the ConfirmationPolicy to the tools (the one
-control that must set tool metadata rather than a callback). Every control hooks
-an existing Agent seam and maps to the OWASP/MAESTRO taxonomy in
-janreth/security/taxonomy.py - which both the README coverage matrix and the
-attack suite read from.
+control that must set tool metadata rather than a callback) and, optionally, a
+delegation ScopeToken. Every control hooks an existing Agent seam and maps to the
+OWASP/MAESTRO taxonomy in janreth/security/taxonomy.py - which both the README
+coverage matrix and the attack suite read from.
 """
 
 from __future__ import annotations
 
 from janreth.security import audit as _audit
 from janreth.security import injection as _injection
+from janreth.security import provenance as _provenance  # noqa: F401 (registers control)
 from janreth.security import redaction as _redaction
+from janreth.security import sandbox as _sandbox
 from janreth.security import sanitize as _sanitize
 from janreth.security.audit import AuditTrail, get_audit
 from janreth.security.confirmation import apply_confirmation_policy, is_high_impact
+from janreth.security.identity import (
+    ScopeToken,
+    get_scope,
+    scope_gate,
+    set_scope,
+    sign,
+    verify,
+)
 from janreth.security.policy import ToolPolicy, default_policy, policy_gate
+from janreth.security.provenance import is_trusted_mcp, tool_origins
 from janreth.security.taxonomy import CONTROLS, ControlSpec, coverage
 
 __all__ = [
@@ -36,6 +47,14 @@ __all__ = [
     "default_policy",
     "apply_confirmation_policy",
     "is_high_impact",
+    "ScopeToken",
+    "scope_gate",
+    "set_scope",
+    "get_scope",
+    "sign",
+    "verify",
+    "is_trusted_mcp",
+    "tool_origins",
     "CONTROLS",
     "ControlSpec",
     "coverage",
@@ -45,11 +64,10 @@ __all__ = [
 def secure_defaults(policy: ToolPolicy | None = None) -> dict:
     """Return the default security control bundle as Agent callback kwargs.
 
-    Per seam the AuditTrail observer runs first (so it records every attempt
-    before any enforcing control can short-circuit it), then the enforcing
-    controls. Splat into an Agent: ``Agent(..., **secure_defaults())``.
-    ConfirmationPolicy is applied to the tools (not via a callback) - use
-    ``secure_agent()`` for that.
+    Per seam the AuditTrail observer runs first (recording every attempt before
+    any enforcing control can short-circuit it), then the enforcing controls.
+    Splat into an Agent: ``Agent(..., **secure_defaults())``. ConfirmationPolicy
+    and ScopeToken are applied via ``secure_agent()``, not as default callbacks.
     """
     pol = policy or default_policy()
     return {
@@ -61,6 +79,7 @@ def secure_defaults(policy: ToolPolicy | None = None) -> dict:
         "before_tool_callbacks": [
             _audit.audit_before_tool,
             policy_gate(pol),
+            _sandbox.sandbox_policy_before_tool,
         ],
         "after_tool_callbacks": [
             _audit.audit_after_tool,
@@ -78,13 +97,14 @@ def secure_agent(
     *,
     policy: ToolPolicy | None = None,
     confirm_high_impact: bool = True,
+    scope: ScopeToken | None = None,
     **agent_kwargs,
 ):
     """Build an Agent with Janreth's controls on by default.
 
     Applies the ConfirmationPolicy to the tools (high-impact tools require human
-    confirmation) and attaches the secure_defaults() callbacks. Any caller-
-    supplied callbacks are appended after the security ones.
+    confirmation), an optional delegation ScopeToken, and the secure_defaults()
+    callbacks. Any caller-supplied callbacks are appended after the security ones.
     """
     from janreth.agent import Agent
 
@@ -93,6 +113,8 @@ def secure_agent(
         apply_confirmation_policy(tool_list)
 
     defaults = secure_defaults(policy=policy)
+    if scope is not None:
+        defaults["before_tool_callbacks"].append(scope_gate(scope))
     for key in ("before_llm_callbacks", "before_tool_callbacks", "after_tool_callbacks"):
         extra = list(agent_kwargs.pop(key, []) or [])
         agent_kwargs[key] = defaults[key] + extra
