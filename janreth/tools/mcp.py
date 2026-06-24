@@ -47,7 +47,7 @@ def _create_mcp_tool(mcp_tool, connection: dict) -> FunctionTool:
 async def load_mcp_tools(connection: dict) -> list[BaseTool]:
     """Load tools from an MCP server and convert to FunctionTools.
 
-    Matches CH04 Listing 4.7. Each MCP tool becomes a FunctionTool that
+    Matches  . Each MCP tool becomes a FunctionTool that
     re-establishes the connection on each invocation.
     """
     tools: list[BaseTool] = []
@@ -65,7 +65,7 @@ async def load_mcp_tools(connection: dict) -> list[BaseTool]:
 
 
 def mcp_tools_to_openai_format(mcp_tools) -> list[dict]:
-    """Convert MCP tool definitions to OpenAI tool format (CH03 Listing 3.23)."""
+    """Convert MCP tool definitions to OpenAI tool format ( )."""
     return [
         format_tool_definition(
             name=tool.name,

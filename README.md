@@ -1,36 +1,121 @@
-# Build an AI Agent from Scratch
+# Janreth
 
+An open-source Python agent framework that ships its security controls **on by
+default** — and proves each one with a runnable attack the framework blocks.
 
-## Structure
+Most agent frameworks leave security to you. Janreth wires a set of controls into
+the agent's own execution seams, maps each to the OWASP Agentic / MAESTRO threat
+model, and pairs every control with an attack demo that succeeds with the control
+off and is blocked with it on. The attack suite is the test suite.
+
+Built on `asyncio` + Pydantic + LiteLLM (any provider). No other agent framework
+underneath.
+
+## Security on by default
+
+```python
+from janreth import tool, LlmClient
+from janreth.security import secure_agent
+
+@tool
+def lookup(topic: str) -> str:
+    """Look up a fact."""
+    return "..."
+
+agent = secure_agent(model=LlmClient("claude-haiku-4-5-20251001"), tools=[lookup])
+result = await agent.run(user_input="...")
+```
+
+`secure_agent()` attaches the controls below, requires human confirmation for
+high-impact tools, and records every decision on a tamper-evident audit trail.
+Security is opt-out, not opt-in. (For full control over the callback bundle, use
+`Agent(..., **secure_defaults())`.)
+
+## Controls and what they cover
+
+Each control hooks an existing Agent seam and maps to the OWASP Agentic Threats
+(T1–T17), the OWASP Agentic Top 10 (ASI), MAESTRO layers, STRIDE, and the OWASP
+"Securing Agentic Applications" Key Components (KC). The mapping lives in one
+place — `janreth/security/taxonomy.py` — and is validated against the source
+tables, so a mistyped code fails fast. Regenerate this table with
+`python scripts/coverage_matrix.py`.
+
+| Control | Seam | OWASP-Agentic / ASI |
+|---|---|---|
+| **ToolPolicyGate** | `before_tool_callbacks` | T2, T3, T4, ASI02, ASI03 |
+| **ConfirmationPolicy** | `BaseTool.requires_confirmation + suspend/resume` | T10, T15, ASI09 |
+| **Redactor** | `after_tool_callbacks + before_llm_callbacks` | T2, T3, ASI02, ASI03 |
+| **InjectionScreen** | `before_llm_callbacks + after_tool_callbacks` | T5, T6, T12, ASI01 |
+| **OutputSanitizer** | `after_tool_callbacks` | T5, T12 |
+| **MemoryGuard** | `after_tool_callbacks (memory-recall tools)` | T1, ASI06 |
+| **SandboxPolicy** | `before_tool_callbacks` | T2, T4, T11, ASI05 |
+| **AgentIdentity / ScopeToken** | `ExecutionContext scope + before_tool + A2A sign/verify` | T3, T9, T13, T16, ASI03, ASI07, ASI10 |
+| **ToolProvenance** | `tool registration + MCP loading` | T17, ASI04 |
+| **AuditTrail** | `ExecutionContext.state + before/after callbacks` | T8 |
+
+**Coverage:** T-codes 15/17 · ASI 9/10 · STRIDE 6/6 · KC 6/6 · MAESTRO 7/8.
+
+## Run the attacks
 
 ```
-agents/        
-  types.py              # Message, ToolCall, ToolResult, Event, ContentItem
-  context.py            # ExecutionContext, AgentResult, PendingToolCall, ToolConfirmation
-  llm.py                # LlmRequest, LlmResponse, LlmClient
-  agent.py              # Agent (ReAct loop)
-  rag.py                # Embeddings, chunking, vector search
-  callbacks.py          # approval_callback, search_compressor
-  planning.py           # Task, create_tasks, reflection
-  skills.py             # SkillInfo, discover_skills, generate_skills_prompt
-  transfer.py           # create_transfer_tool
-  remote.py             # RemoteAgent (A2A)
-  a2a_server.py         # MathAgentExecutor
-  tools/                # Tool modules
-  memory/               # Session, long-term memory, context optimization
-  workflows/            # Sequential, Parallel, Loop
-  eval/                 # GAIA benchmark, evaluation prompts
+python -m attacks      # runs every demo: controls off -> succeeds, on -> blocked
+```
 
+```
+[PASS] a01_goal_hijack        ASI01 / T6    off_succeeds=True  on_blocked=True  -> InjectionScreen
+[PASS] a03_tool_abuse         ASI02 / T2    off_succeeds=True  on_blocked=True  -> ToolPolicyGate
+[PASS] a05_rce_egress         ASI05 / T11   off_succeeds=True  on_blocked=True  -> SandboxPolicy
+[PASS] a08_secret_exfil       T2 / Info     off_succeeds=True  on_blocked=True  -> Redactor
+[PASS] a10_audit_repudiation  T8 / Repud.   off_succeeds=True  on_blocked=True  -> AuditTrail
+... 10/10 attacks blocked by their control.
+```
 
-## Setup
+The attacks live in `attacks/` and double as the security test suite (`pytest`).
+**They are educational only** and run entirely in process against the framework's
+own sandboxed agents and a scripted offline LLM — no real model endpoint, no
+real-world target, no operational attack guidance.
 
-```bash
-# Install uv (if not already installed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
+## What this does NOT protect against
 
-# Install dependencies
-uv sync
+Honesty matters more than a longer coverage list. The detectors (injection,
+redaction, egress) are best-effort heuristics — an *advisory estimate*, not a
+guarantee. Specifically:
 
-# Set up API keys in .env
-cp .env.example .env
-# Edit .env and add your API keys
+- **Two threats have no runtime control here:** T7 (Misaligned & Deceptive
+  Behaviors) and T14 (Human Attacks on Multi-Agent Systems) are model-alignment
+  and human-process concerns, not things a wrapper can enforce.
+- Sandbox **isolation** is provided by the sandbox (e.g. E2B); SandboxPolicy adds
+  policy on top, it is not the isolation boundary.
+- A determined prompt-injection or novel obfuscation can evade rule-based
+  screening. Treat these controls as defense in depth, not a perimeter.
+
+## Install
+
+```
+uv sync                                  # or: pip install -e .
+uv run pytest                            # the security test suite
+uv run python -m attacks                 # the attack report
+uv run python scripts/check_voice.py     # the voice/lexicon gate
+```
+
+Requires Python 3.13+. Set provider keys (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY`)
+to run a real agent; the tests and attacks need neither.
+
+## Layout
+
+```
+janreth/
+  agent.py  context.py  llm.py  types.py        # the ReAct core (LiteLLM-backed)
+  tools/  memory/  rag.py  transfer.py  remote.py  workflows/
+  security/        # the control set + taxonomy + secure_defaults/secure_agent
+attacks/           # the ethical attack suite (== the security tests)
+examples/          # secure_agent.py: what a Janreth agent reads like
+scripts/           # coverage_matrix.py, check_voice.py
+```
+
+## Origins
+
+Janreth's agent core began as the companion code to the book *Build an AI Agent
+from Scratch* and was extended into a security-first framework: the controls,
+the attack suite, the taxonomy, and the audit trail are the additions. Built by
+[Janatan Tajik](https://janatantajik.com), founder of Janreth.

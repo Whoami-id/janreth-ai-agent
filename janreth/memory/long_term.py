@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 
 class TaskMemory(BaseModel):
-    """Structured memory for GAIA problem-solving records."""
+    """Structured record of a past task the agent worked on."""
 
     task_summary: str = Field(description="What the problem asked")
     approach: str = Field(description="Methods and tools used to solve it")
@@ -73,7 +73,7 @@ Judgment criteria:
 
 
 class TaskMemoryManager:
-    """Memory manager for GAIA problem-solving learning."""
+    """Long-term task-memory store backed by ChromaDB."""
 
     def __init__(
         self,

@@ -53,7 +53,7 @@ class BaseTool(ABC):
         context: "ExecutionContext",
         request: "LlmRequest",
     ) -> None:
-        """Hook for tools to modify the LlmRequest before it is sent (Listing 6.37/6.38)."""
+        """Hook for tools to modify the LlmRequest before it is sent ()."""
         return None
 
     @abstractmethod
@@ -121,7 +121,7 @@ class FunctionTool(BaseTool):
         return format_tool_definition(self.name, self.description, parameters)
 
     def get_source_code(self) -> str:
-        """Get the source code of the wrapped function (CH08 sandbox)."""
+        """Get the source code of the wrapped function ( sandbox)."""
         if not self.sandbox_executable:
             raise ValueError(f"Tool '{self.name}' is not marked as sandbox_executable")
         source = inspect.getsource(self.func)

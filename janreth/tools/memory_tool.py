@@ -1,4 +1,4 @@
-"""Memory tool with automatic injection of relevant past experiences (Listing 6.37)."""
+"""Memory tool with automatic injection of relevant past experiences ()."""
 
 from __future__ import annotations
 

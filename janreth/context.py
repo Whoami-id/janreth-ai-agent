@@ -20,14 +20,14 @@ class ExecutionContext:
     current_step: int = 0
     state: Dict[str, Any] = field(default_factory=dict)
     final_result: Optional[str | BaseModel] = None
-    # CH06 session
+    #  session
     session: Optional[Any] = None
     session_manager: Optional[Any] = None
-    # CH06 long-term memory
+    #  long-term memory
     memory_manager: Optional[Any] = None
-    # CH08 code execution
+    #  code execution
     code_env: Optional[Any] = None  # E2B Sandbox
-    # CH09 agent transfer
+    #  agent transfer
     transfer_to: Optional[str] = None
     transfer_tools: Dict[str, Any] = field(default_factory=dict)
 
@@ -50,13 +50,13 @@ class AgentResult:
 
 
 class PendingToolCall(BaseModel):
-    """A tool call awaiting user confirmation (CH06 human-in-the-loop)."""
+    """A tool call awaiting user confirmation ( human-in-the-loop)."""
     tool_call: "ToolCall"
     confirmation_message: str
 
 
 class ToolConfirmation(BaseModel):
-    """User's response to a pending tool call (CH06 human-in-the-loop)."""
+    """User's response to a pending tool call ( human-in-the-loop)."""
     tool_call_id: str
     approved: bool
     modified_arguments: dict | None = None
