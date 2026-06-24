@@ -8,16 +8,16 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 
 from pydantic import BaseModel
 
-from agents.llm import LlmClient, LlmRequest, LlmResponse
-from agents.tools.base import BaseTool, FunctionTool, tool
-from agents.tools.helpers import format_tool_definition
-from agents.context import (
+from janreth.llm import LlmClient, LlmRequest, LlmResponse
+from janreth.tools.base import BaseTool, FunctionTool, tool
+from janreth.tools.helpers import format_tool_definition
+from janreth.context import (
     AgentResult,
     ExecutionContext,
     PendingToolCall,
     ToolConfirmation,
 )
-from agents.types import (
+from janreth.types import (
     Event,
     Message,
     ToolCall,
@@ -25,8 +25,8 @@ from agents.types import (
 )
 
 if TYPE_CHECKING:
-    from agents.memory.long_term import TaskMemoryManager
-    from agents.memory.session import BaseSessionManager
+    from janreth.memory.long_term import TaskMemoryManager
+    from janreth.memory.session import BaseSessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -366,7 +366,7 @@ class Agent:
         # Add skills prompt if available (CH08)
         if self.skills_path:
             try:
-                from agents.skills import discover_skills, generate_skills_prompt
+                from janreth.skills import discover_skills, generate_skills_prompt
                 skills = discover_skills(self.skills_path)
                 skills_prompt = generate_skills_prompt(skills)
                 if skills_prompt:
@@ -486,18 +486,18 @@ class Agent:
 
         # Add code execution tool (CH08)
         if self.code_execution == "e2b":
-            from agents.tools.code_execution import execute_python
+            from janreth.tools.code_execution import execute_python
             tools.append(execute_python)
 
         # Add transfer tool (CH09)
         if self.sub_agents:
-            from agents.transfer import create_transfer_tool
+            from janreth.transfer import create_transfer_tool
             transfer_tool = create_transfer_tool(self.sub_agents)
             tools.append(transfer_tool)
 
         # Add memory tool if memory_manager is available (CH06)
         if self.memory_manager:
-            from agents.tools.memory_tool import MemoryTool
+            from janreth.tools.memory_tool import MemoryTool
             tools.append(MemoryTool())
 
         return tools
@@ -514,7 +514,7 @@ class Agent:
 
             # Upload skills if available
             if self.skills_path:
-                from agents.skills import discover_skills
+                from janreth.skills import discover_skills
                 skills = discover_skills(self.skills_path)
                 for skill_info in skills:
                     sandbox.files.write(

@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from agents.context import ExecutionContext
-from agents.tools.base import BaseTool
-from agents.types import Message
+from janreth.context import ExecutionContext
+from janreth.tools.base import BaseTool
+from janreth.types import Message
 
 if TYPE_CHECKING:
-    from agents.llm import LlmRequest
-    from agents.memory.long_term import TaskMemory
+    from janreth.llm import LlmRequest
+    from janreth.memory.long_term import TaskMemory
 
 
 class MemoryTool(BaseTool):

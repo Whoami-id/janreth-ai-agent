@@ -8,11 +8,11 @@ from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type
 
 from pydantic import BaseModel
 
-from agents.tools.helpers import format_tool_definition, function_to_input_schema
-from agents.context import ExecutionContext
+from janreth.tools.helpers import format_tool_definition, function_to_input_schema
+from janreth.context import ExecutionContext
 
 if TYPE_CHECKING:
-    from agents.llm import LlmRequest
+    from janreth.llm import LlmRequest
 
 
 class BaseTool(ABC):

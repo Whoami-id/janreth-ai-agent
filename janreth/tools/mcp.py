@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from agents.tools.base import BaseTool, FunctionTool
-from agents.tools.helpers import format_tool_definition
+from janreth.tools.base import BaseTool, FunctionTool
+from janreth.tools.helpers import format_tool_definition
 
 
 def _extract_text_content(result) -> str:

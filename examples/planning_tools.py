@@ -4,7 +4,7 @@ from typing import List, Literal
 
 from pydantic import BaseModel
 
-from agents.tools.base import tool
+from janreth.tools.base import tool
 
 
 class Task(BaseModel):

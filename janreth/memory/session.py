@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from agents.types import Event
+from janreth.types import Event
 
 
 class Session(BaseModel):

@@ -6,7 +6,7 @@ from typing import Any
 
 import httpx
 
-from agents.context import AgentResult, ExecutionContext
+from janreth.context import AgentResult, ExecutionContext
 
 
 class RemoteAgent:

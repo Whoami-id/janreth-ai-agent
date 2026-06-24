@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
-from agents.tools.base import FunctionTool, tool
-from agents.context import ExecutionContext
+from janreth.tools.base import FunctionTool, tool
+from janreth.context import ExecutionContext
 
 if TYPE_CHECKING:
-    from agents.agent import Agent
+    from janreth.agent import Agent
 
 
 def create_transfer_tool(target_agents: List["Agent"]) -> FunctionTool:

@@ -1,8 +1,8 @@
 """Tool callbacks for the agent: approval and compression."""
 
-from agents.rag import fixed_length_chunking, get_embeddings, vector_search
-from agents.context import ExecutionContext
-from agents.types import ToolCall, ToolResult, Message
+from janreth.rag import fixed_length_chunking, get_embeddings, vector_search
+from janreth.context import ExecutionContext
+from janreth.types import ToolCall, ToolResult, Message
 
 
 DANGEROUS_TOOLS = ["delete_file", "send_email", "execute_sql"]

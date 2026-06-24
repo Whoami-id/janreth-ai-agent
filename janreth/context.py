@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
-from agents.types import Event
+from janreth.types import Event
 
 
 @dataclass
@@ -63,6 +63,6 @@ class ToolConfirmation(BaseModel):
 
 
 # Avoid circular import — resolve forward reference
-from agents.types import ToolCall  # noqa: E402
+from janreth.types import ToolCall  # noqa: E402
 
 PendingToolCall.model_rebuild()

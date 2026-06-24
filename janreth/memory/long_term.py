@@ -9,11 +9,11 @@ import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from pydantic import BaseModel, Field
 
-from agents.context import ExecutionContext
-from agents.types import Event, Message, ToolCall, ToolResult
+from janreth.context import ExecutionContext
+from janreth.types import Event, Message, ToolCall, ToolResult
 
 if TYPE_CHECKING:
-    from agents.llm import LlmClient
+    from janreth.llm import LlmClient
 
 
 class TaskMemory(BaseModel):

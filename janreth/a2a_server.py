@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from agents.agent import Agent
+    from janreth.agent import Agent
 
 
 class AgentExecutor:

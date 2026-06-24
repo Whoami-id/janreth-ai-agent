@@ -8,8 +8,8 @@ from typing import Any, Dict, List, Optional, Type, Union
 from litellm import acompletion
 from pydantic import BaseModel, Field
 
-from agents.types import ContentItem, Message, ToolCall, ToolResult
-from agents.tools.base import BaseTool
+from janreth.types import ContentItem, Message, ToolCall, ToolResult
+from janreth.tools.base import BaseTool
 
 
 class LlmRequest(BaseModel):

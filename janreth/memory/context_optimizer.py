@@ -6,11 +6,11 @@ import inspect
 import json
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from agents.context import ExecutionContext
-from agents.types import ContentItem, Message, ToolCall, ToolResult
+from janreth.context import ExecutionContext
+from janreth.types import ContentItem, Message, ToolCall, ToolResult
 
 if TYPE_CHECKING:
-    from agents.llm import LlmClient, LlmRequest, LlmResponse
+    from janreth.llm import LlmClient, LlmRequest, LlmResponse
 
 
 def create_optimizer_callback(apply_optimization, threshold: int = 50000):
@@ -38,7 +38,7 @@ def count_tokens(request: "LlmRequest") -> int:
     """Calculate total token count of LlmRequest."""
     import tiktoken
 
-    from agents.llm import build_messages
+    from janreth.llm import build_messages
 
     try:
         encoding = tiktoken.encoding_for_model(request.model_id or "gpt-5")
@@ -239,7 +239,7 @@ def format_history_for_summary(items: List[ContentItem]) -> str:
 
 async def generate_summary(llm_client: "LlmClient", history: str) -> str:
     """Generate history summary using LLM."""
-    from agents.llm import LlmRequest as LR
+    from janreth.llm import LlmRequest as LR
 
     request = LR(
         instructions=[SUMMARIZATION_PROMPT.format(history=history)],

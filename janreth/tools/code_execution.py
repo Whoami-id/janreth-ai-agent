@@ -2,8 +2,8 @@
 
 import json
 
-from agents.tools.base import tool
-from agents.context import ExecutionContext
+from janreth.tools.base import tool
+from janreth.context import ExecutionContext
 
 
 @tool(

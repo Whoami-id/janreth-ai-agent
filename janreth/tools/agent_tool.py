@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, Any, Type
 
 from pydantic import BaseModel
 
-from agents.tools.base import BaseTool
-from agents.tools.helpers import format_tool_definition
-from agents.context import ExecutionContext
+from janreth.tools.base import BaseTool
+from janreth.tools.helpers import format_tool_definition
+from janreth.context import ExecutionContext
 
 if TYPE_CHECKING:
-    from agents.agent import Agent
+    from janreth.agent import Agent
 
 
 class AgentTool(BaseTool):

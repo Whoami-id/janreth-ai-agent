@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import List
 
-from agents.agent import Agent
-from agents.context import AgentResult, ExecutionContext
+from janreth.agent import Agent
+from janreth.context import AgentResult, ExecutionContext
 
 
 class SequentialWorkflow(Agent):

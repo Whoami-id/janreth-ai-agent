@@ -1,7 +1,7 @@
 [project]
-name = "build-an-ai-agent"
+name = "janreth"
 version = "0.1.0"
-description = "Build an AI Agent from Scratch - companion code repository"
+description = "Janreth — a secure-by-default Python agent framework. Security controls are on by default, and each one ships with a runnable attack the framework blocks."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -22,8 +22,4 @@ dependencies = [
     "openpyxl>=3.1.0",
     "pymupdf>=1.24.0",
     "httpx>=0.27.0",
-    "datasets>=2.0",
-    "tqdm>=4.0",
-    "jupyterlab>=4.0",
-    "python-docx>=1.0.0",
 ]
