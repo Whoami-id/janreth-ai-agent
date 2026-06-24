@@ -8,16 +8,22 @@ Run them all with ``python -m attacks`` or via the test suite.
 from __future__ import annotations
 
 from attacks import (
+    a01_goal_hijack,
+    a02_indirect_injection,
     a03_tool_abuse,
     a04_privilege_escalation,
+    a06_memory_poisoning,
     a08_secret_exfil,
     a09_hitl_bypass,
 )
 from attacks.runner import AttackResult, ETHICAL_NOTE
 
 ATTACKS = [
+    a01_goal_hijack,
+    a02_indirect_injection,
     a03_tool_abuse,
     a04_privilege_escalation,
+    a06_memory_poisoning,
     a08_secret_exfil,
     a09_hitl_bypass,
 ]
@@ -26,14 +32,3 @@ ATTACKS = [
 def run_all() -> list[AttackResult]:
     """Run every registered attack and return the results."""
     return [module.run() for module in ATTACKS]
-
-
-if __name__ == "__main__":
-    print(ETHICAL_NOTE)
-    print()
-    failures = 0
-    for result in run_all():
-        print(result.line())
-        failures += 0 if result.passed else 1
-    print()
-    print(f"{len(ATTACKS) - failures}/{len(ATTACKS)} attacks blocked by their control.")

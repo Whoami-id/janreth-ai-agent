@@ -19,8 +19,9 @@ attack suite read from.
 from __future__ import annotations
 
 from janreth.security import audit as _audit
-from janreth.security import policy as _policy
+from janreth.security import injection as _injection
 from janreth.security import redaction as _redaction
+from janreth.security import sanitize as _sanitize
 from janreth.security.audit import AuditTrail, get_audit
 from janreth.security.confirmation import apply_confirmation_policy, is_high_impact
 from janreth.security.policy import ToolPolicy, default_policy, policy_gate
@@ -45,16 +46,29 @@ def secure_defaults(policy: ToolPolicy | None = None) -> dict:
     """Return the default security control bundle as Agent callback kwargs.
 
     Per seam the AuditTrail observer runs first (so it records every attempt
-    before any enforcing control can short-circuit it), then the controls:
-    ToolPolicyGate (before_tool) and Redactor (after_tool + before_llm).
-    Splat into an Agent: ``Agent(..., **secure_defaults())``. ConfirmationPolicy
-    is applied to the tools (not via a callback) - use ``secure_agent()``.
+    before any enforcing control can short-circuit it), then the enforcing
+    controls. Splat into an Agent: ``Agent(..., **secure_defaults())``.
+    ConfirmationPolicy is applied to the tools (not via a callback) - use
+    ``secure_agent()`` for that.
     """
     pol = policy or default_policy()
     return {
-        "before_llm_callbacks": [_audit.audit_before_llm, _redaction.redactor_before_llm],
-        "before_tool_callbacks": [_audit.audit_before_tool, policy_gate(pol)],
-        "after_tool_callbacks": [_audit.audit_after_tool, _redaction.redactor_after_tool],
+        "before_llm_callbacks": [
+            _audit.audit_before_llm,
+            _redaction.redactor_before_llm,
+            _injection.injection_before_llm,
+        ],
+        "before_tool_callbacks": [
+            _audit.audit_before_tool,
+            policy_gate(pol),
+        ],
+        "after_tool_callbacks": [
+            _audit.audit_after_tool,
+            _redaction.redactor_after_tool,
+            _injection.injection_after_tool,
+            _sanitize.sanitizer_after_tool,
+            _sanitize.memory_guard_after_tool,
+        ],
     }
 
 
