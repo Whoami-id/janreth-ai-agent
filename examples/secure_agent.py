@@ -10,8 +10,12 @@ from __future__ import annotations
 
 import asyncio
 
+from dotenv import load_dotenv
+
 from janreth import LlmClient, tool
 from janreth.security import ScopeToken, ToolPolicy, get_audit, secure_agent
+
+load_dotenv()  # load ANTHROPIC_API_KEY / OPENAI_API_KEY from a .env file
 
 
 @tool
@@ -28,7 +32,7 @@ def send_email(to: str, body: str) -> str:
 
 async def main() -> None:
     agent = secure_agent(
-        model=LlmClient("claude-haiku-4-5-20251001"),
+        model=LlmClient("anthropic/claude-haiku-4-5-20251001"),
         tools=[lookup_policy, send_email],
         instructions="You are a careful assistant. Use tools when needed.",
         # Only these tools may run; send_email also requires human confirmation.
