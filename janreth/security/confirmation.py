@@ -6,8 +6,8 @@ status='pending' and serializes the pending call; a later
 run(tool_confirmations=[...]) resumes it. The flag exists in the framework but no
 built-in tool sets it - this policy activates the dormant gate.
 
-Maps to: T10 Overwhelming Human in the Loop, T15 Human Manipulation - MAESTRO
-Security & Compliance - ASI09 - STRIDE Elevation of Privilege - KC2.
+Maps to: T10 Overwhelming Human in the Loop - MAESTRO Security & Compliance -
+ASI09 (derived from T10) - STRIDE Elevation of Privilege - KC2.
 """
 
 from __future__ import annotations
@@ -20,9 +20,8 @@ SPEC = register(
         name="ConfirmationPolicy",
         summary="Require human confirmation before high-impact tools execute.",
         seam="BaseTool.requires_confirmation + agent suspend/resume",
-        tcodes=("T10", "T15"),
+        tcodes=("T10",),
         maestro=("Security & Compliance",),
-        asi=("ASI09",),
         stride=("Elevation of Privilege",),
         kc=("KC2",),
     )

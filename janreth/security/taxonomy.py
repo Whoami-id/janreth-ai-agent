@@ -9,9 +9,11 @@ frameworks Janreth maps against:
 - STRIDE (6)
 - OWASP "Securing Agentic Applications" Key Components (KC1-KC6)
 
-Both the README coverage matrix and the attack-suite assertions read from here,
-so each control's mapping is declared once and validated against these tables.
-Codes and titles are transcribed from the OWASP source packs - no invention.
+Codes and titles are transcribed from the OWASP source packs - no invention. A
+control declares only its T-codes (the mechanisms it addresses); its ASI codes
+are DERIVED from those T-codes via the authoritative T->ASI crosswalk below, so a
+control's ASI can never drift from OWASP. Both the README coverage matrix and the
+attack suite read from here.
 """
 
 from __future__ import annotations
@@ -83,13 +85,61 @@ KC: dict[str, str] = {
     "KC6": "Operational Environment",
 }
 
+# Authoritative T-code -> ASI crosswalk. Transcribed verbatim from the OWASP
+# Agentic Top 10 Appendix A mapping (the same `asi:` crosswalk the Janreth GCC
+# platform uses). T9 maps to no ASI in the source. ASI is always derived from
+# this table - never hand-assigned to a control.
+TCODE_TO_ASI: dict[str, tuple[str, ...]] = {
+    "T1": ("ASI06",),
+    "T2": ("ASI02", "ASI04"),
+    "T3": ("ASI03",),
+    "T4": ("ASI02", "ASI06"),
+    "T5": ("ASI08",),
+    "T6": ("ASI01", "ASI06"),
+    "T7": ("ASI01", "ASI09"),
+    "T8": ("ASI08", "ASI09"),
+    "T9": (),
+    "T10": ("ASI09",),
+    "T11": ("ASI04", "ASI05"),
+    "T12": ("ASI04", "ASI06", "ASI07"),
+    "T13": ("ASI04", "ASI10"),
+    "T14": ("ASI10",),
+    "T15": ("ASI10",),
+    "T16": ("ASI02", "ASI04", "ASI07"),
+    "T17": ("ASI04",),
+}
+
+
+def asi_for(tcodes) -> tuple[str, ...]:
+    """ASI codes for a set of T-codes, derived via the authoritative crosswalk."""
+    out: set[str] = set()
+    for code in tcodes:
+        out.update(TCODE_TO_ASI.get(code, ()))
+    return tuple(sorted(out))
+
+
+def _validate_crosswalk() -> None:
+    """Every T-code is mapped, and every mapped ASI code is valid."""
+    missing = set(TCODES) - set(TCODE_TO_ASI)
+    if missing:
+        raise ValueError(f"TCODE_TO_ASI missing T-codes: {sorted(missing)}")
+    for code, asis in TCODE_TO_ASI.items():
+        for asi_code in asis:
+            if asi_code not in ASI:
+                raise ValueError(f"{code}: unknown ASI code {asi_code!r}")
+
+
+_validate_crosswalk()
+
 
 @dataclass(frozen=True)
 class ControlSpec:
     """A Janreth security control and the frameworks it maps to.
 
-    `seam` names the Agent hook the control attaches to, so the mapping doubles
-    as part of the audit trail (which control fired where).
+    A control declares its T-codes, MAESTRO layers, STRIDE categories, and KC
+    components. Its ASI codes are DERIVED from the T-codes (see `asi`), so they
+    stay consistent with the OWASP crosswalk by construction. `seam` names the
+    Agent hook the control attaches to.
     """
 
     key: str
@@ -98,21 +148,22 @@ class ControlSpec:
     seam: str
     tcodes: tuple[str, ...] = ()
     maestro: tuple[str, ...] = ()
-    asi: tuple[str, ...] = ()
     stride: tuple[str, ...] = ()
     kc: tuple[str, ...] = ()
 
+    @property
+    def asi(self) -> tuple[str, ...]:
+        """ASI codes derived from this control's T-codes via the OWASP crosswalk."""
+        return asi_for(self.tcodes)
+
     def validate(self) -> None:
-        """Raise if any mapped code is absent from the reference tables."""
+        """Raise if any declared code is absent from the reference tables."""
         for code in self.tcodes:
             if code not in TCODES:
                 raise ValueError(f"{self.key}: unknown T-code {code!r}")
         for layer in self.maestro:
             if layer not in MAESTRO_LAYERS:
                 raise ValueError(f"{self.key}: unknown MAESTRO layer {layer!r}")
-        for code in self.asi:
-            if code not in ASI:
-                raise ValueError(f"{self.key}: unknown ASI code {code!r}")
         for cat in self.stride:
             if cat not in STRIDE:
                 raise ValueError(f"{self.key}: unknown STRIDE category {cat!r}")
@@ -139,7 +190,7 @@ def coverage() -> dict[str, list[str]]:
     """Framework codes covered by at least one registered control.
 
     Returns {framework: [covered codes]} - the data behind the README
-    control/coverage matrix.
+    control/coverage matrix. ASI is derived from the covered T-codes.
     """
     covered: dict[str, set[str]] = {
         "tcodes": set(),

@@ -1,7 +1,8 @@
 """a09 - Human-in-the-loop bypass: a high-impact tool runs without confirmation.
 
 Educational only. Validates ConfirmationPolicy.
-Maps to ASI09 Human-Agent Trust Exploitation / T10, T15.
+Maps to T10 Overwhelming Human in the Loop -> ASI09 Human-Agent Trust
+Exploitation (derived via the OWASP crosswalk).
 """
 
 from __future__ import annotations

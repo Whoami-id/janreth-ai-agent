@@ -2,7 +2,8 @@
 
 Educational only. Validates InjectionScreen on the after_tool seam (the
 higher-value surface - poisoned web/search/file/MCP content).
-Maps to ASI01 Agent Goal Hijack / T12 Agent Communication Poisoning.
+Maps to T12 Agent Communication Poisoning -> ASI06 Memory & Context Poisoning
+(derived via the OWASP crosswalk; T12 -> ASI04/ASI06/ASI07).
 """
 
 from __future__ import annotations
@@ -36,7 +37,7 @@ def run() -> AttackResult:
     return AttackResult(
         name="a02_indirect_injection",
         summary="Tool output carries an instruction-override (indirect injection).",
-        codes="ASI01 / T12",
+        codes="ASI06 / T12",
         control="InjectionScreen (after_tool)",
         succeeded_without_controls=succeeded,
         blocked_with_controls=blocked,

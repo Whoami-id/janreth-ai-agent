@@ -40,20 +40,23 @@ place — `janreth/security/taxonomy.py` — and is validated against the source
 tables, so a mistyped code fails fast. Regenerate this table with
 `python scripts/coverage_matrix.py`.
 
-| Control | Seam | OWASP-Agentic / ASI |
-|---|---|---|
-| **ToolPolicyGate** | `before_tool_callbacks` | T2, T3, T4, ASI02, ASI03 |
-| **ConfirmationPolicy** | `BaseTool.requires_confirmation + suspend/resume` | T10, T15, ASI09 |
-| **Redactor** | `after_tool_callbacks + before_llm_callbacks` | T2, T3, ASI02, ASI03 |
-| **InjectionScreen** | `before_llm_callbacks + after_tool_callbacks` | T5, T6, T12, ASI01 |
-| **OutputSanitizer** | `after_tool_callbacks` | T5, T12 |
-| **MemoryGuard** | `after_tool_callbacks (memory-recall tools)` | T1, ASI06 |
-| **SandboxPolicy** | `before_tool_callbacks` | T2, T4, T11, ASI05 |
-| **AgentIdentity / ScopeToken** | `ExecutionContext scope + before_tool + A2A sign/verify` | T3, T9, T13, T16, ASI03, ASI07, ASI10 |
-| **ToolProvenance** | `tool registration + MCP loading` | T17, ASI04 |
-| **AuditTrail** | `ExecutionContext.state + before/after callbacks` | T8 |
+Each control declares its T-codes; **its ASI codes are derived from those T-codes
+via the OWASP crosswalk** (never hand-assigned), so they can't drift from OWASP.
 
-**Coverage:** T-codes 15/17 · ASI 9/10 · STRIDE 6/6 · KC 6/6 · MAESTRO 7/8.
+| Control | Seam | T-codes → ASI (derived) |
+|---|---|---|
+| **ToolPolicyGate** | `before_tool_callbacks` | T2, T3, T4 → ASI02, ASI03, ASI04, ASI06 |
+| **ConfirmationPolicy** | `BaseTool.requires_confirmation + suspend/resume` | T10 → ASI09 |
+| **Redactor** | `after_tool_callbacks + before_llm_callbacks` | T2, T3 → ASI02, ASI03, ASI04 |
+| **InjectionScreen** | `before_llm_callbacks + after_tool_callbacks` | T6, T12 → ASI01, ASI04, ASI06, ASI07 |
+| **OutputSanitizer** | `after_tool_callbacks` | T12 → ASI04, ASI06, ASI07 |
+| **MemoryGuard** | `after_tool_callbacks (memory-recall tools)` | T1 → ASI06 |
+| **SandboxPolicy** | `before_tool_callbacks` | T2, T4, T11 → ASI02, ASI04, ASI05, ASI06 |
+| **AgentIdentity / ScopeToken** | `ExecutionContext scope + before_tool + A2A sign/verify` | T3, T9, T13, T16 → ASI02, ASI03, ASI04, ASI07, ASI10 |
+| **ToolProvenance** | `tool registration + MCP loading` | T17 → ASI04 |
+| **AuditTrail** | `ExecutionContext.state + before/after callbacks` | T8 → ASI08, ASI09 |
+
+**Coverage:** T-codes 13/17 · ASI 10/10 · STRIDE 6/6 · KC 6/6 · MAESTRO 7/8.
 
 ## Run the attacks
 
@@ -81,9 +84,10 @@ Honesty matters more than a longer coverage list. The detectors (injection,
 redaction, egress) are best-effort heuristics — an *advisory estimate*, not a
 guarantee. Specifically:
 
-- **Two threats have no runtime control here:** T7 (Misaligned & Deceptive
-  Behaviors) and T14 (Human Attacks on Multi-Agent Systems) are model-alignment
-  and human-process concerns, not things a wrapper can enforce.
+- **Four threats have no runtime control here:** T5 (Cascading Hallucination),
+  T7 (Misaligned & Deceptive Behaviors), T14 (Human Attacks on Multi-Agent
+  Systems), and T15 (Human Manipulation) — model-alignment, reliability, and
+  human-process concerns a wrapper can't enforce.
 - Sandbox **isolation** is provided by the sandbox (e.g. E2B); SandboxPolicy adds
   policy on top, it is not the isolation boundary.
 - A determined prompt-injection or novel obfuscation can evade rule-based

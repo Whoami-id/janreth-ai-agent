@@ -7,8 +7,8 @@ neutralizes injection in recalled content and envelopes it as untrusted data, so
 a poisoned memory cannot act as an instruction on read. Both are best-effort
 heuristics - an [advisory estimate].
 
-OutputSanitizer maps to: T5 Cascading Hallucination, T12 Agent Communication
-Poisoning - MAESTRO Data Operations - STRIDE Tampering - KC4.
+OutputSanitizer maps to: T12 Agent Communication Poisoning - MAESTRO Data
+Operations - STRIDE Tampering - KC4.
 MemoryGuard maps to: T1 Memory Poisoning - MAESTRO Data Operations - ASI06
 Memory & Context Poisoning - STRIDE Tampering - KC4.
 """
@@ -28,7 +28,7 @@ OUTPUT_SANITIZER = register(
         name="OutputSanitizer",
         summary="Strip active markup, control/zero-width characters, and oversized tool output.",
         seam="after_tool_callbacks",
-        tcodes=("T5", "T12"),
+        tcodes=("T12",),
         maestro=("Data Operations",),
         stride=("Tampering",),
         kc=("KC4",),
@@ -43,7 +43,6 @@ MEMORY_GUARD = register(
         seam="after_tool_callbacks (memory-recall tools)",
         tcodes=("T1",),
         maestro=("Data Operations",),
-        asi=("ASI06",),
         stride=("Tampering",),
         kc=("KC4",),
     )

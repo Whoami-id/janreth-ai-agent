@@ -26,7 +26,6 @@ SPEC = register(
         seam="before_tool_callbacks",
         tcodes=("T2", "T3", "T4"),
         maestro=("Agent Frameworks", "Security & Compliance"),
-        asi=("ASI02", "ASI03"),
         stride=("Elevation of Privilege",),
         kc=("KC5",),
     )

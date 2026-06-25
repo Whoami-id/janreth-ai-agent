@@ -26,7 +26,6 @@ SPEC = register(
         seam="before_tool_callbacks",
         tcodes=("T2", "T4", "T11"),
         maestro=("Deployment & Infrastructure",),
-        asi=("ASI05",),
         stride=("Elevation of Privilege", "Denial of Service"),
         kc=("KC6",),
     )

@@ -21,7 +21,6 @@ SPEC = register(
         seam="tool registration + tools/mcp.py",
         tcodes=("T17",),
         maestro=("Agent Ecosystem",),
-        asi=("ASI04",),
         stride=("Tampering",),
         kc=("KC5",),
     )

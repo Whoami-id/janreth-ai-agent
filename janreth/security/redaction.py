@@ -26,7 +26,6 @@ SPEC = register(
         seam="after_tool_callbacks + before_llm_callbacks",
         tcodes=("T2", "T3"),
         maestro=("Data Operations", "Security & Compliance"),
-        asi=("ASI02", "ASI03"),
         stride=("Information Disclosure",),
         kc=("KC4", "KC5"),
     )

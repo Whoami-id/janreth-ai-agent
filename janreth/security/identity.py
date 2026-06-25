@@ -32,7 +32,6 @@ SPEC = register(
         seam="ExecutionContext scope + before_tool + A2A sign/verify",
         tcodes=("T3", "T9", "T13", "T16"),
         maestro=("Agent Ecosystem", "Security & Compliance"),
-        asi=("ASI03", "ASI07", "ASI10"),
         stride=("Spoofing", "Elevation of Privilege"),
         kc=("KC2",),
     )

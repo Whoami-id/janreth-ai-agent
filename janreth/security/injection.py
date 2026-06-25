@@ -7,9 +7,9 @@ replies. Detection is rule-based and offline (deterministic for tests); on a
 match the suspect phrase is neutralized in place. Verdicts are an
 [advisory estimate] - a heuristic, not a guarantee.
 
-Maps to: T6 Intent Breaking & Goal Manipulation, T5 Cascading Hallucination
-Attacks, T12 Agent Communication Poisoning - MAESTRO Foundation Models + Data
-Operations - ASI01 Agent Goal Hijack - STRIDE Tampering - KC1, KC3.
+Maps to: T6 Intent Breaking & Goal Manipulation, T12 Agent Communication
+Poisoning - MAESTRO Foundation Models + Data Operations - ASI derived from the
+T-codes (ASI01 / ASI06 / ASI07) - STRIDE Tampering - KC1, KC3.
 """
 
 from __future__ import annotations
@@ -26,9 +26,8 @@ SPEC = register(
         name="InjectionScreen",
         summary="Detect and neutralize instruction-override phrases in user input and tool output.",
         seam="before_llm_callbacks + after_tool_callbacks",
-        tcodes=("T5", "T6", "T12"),
+        tcodes=("T6", "T12"),
         maestro=("Foundation Models", "Data Operations"),
-        asi=("ASI01",),
         stride=("Tampering",),
         kc=("KC1", "KC3"),
     )
