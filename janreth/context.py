@@ -1,4 +1,4 @@
-"""Execution context and result types for the scratch_agents framework."""
+"""Execution context and result types for the janreth framework."""
 
 from __future__ import annotations
 

@@ -24,7 +24,13 @@ from janreth.security import provenance as _provenance  # noqa: F401 (registers 
 from janreth.security import redaction as _redaction
 from janreth.security import sandbox as _sandbox
 from janreth.security import sanitize as _sanitize
-from janreth.security.audit import AuditTrail, get_audit
+from janreth.security.audit import (
+    AuditTrail,
+    audit_after_tool,
+    audit_before_llm,
+    audit_before_tool,
+    get_audit,
+)
 from janreth.security.confirmation import apply_confirmation_policy, is_high_impact
 from janreth.security.identity import (
     ScopeToken,
@@ -34,8 +40,12 @@ from janreth.security.identity import (
     sign,
     verify,
 )
+from janreth.security.injection import injection_after_tool, injection_before_llm
 from janreth.security.policy import ToolPolicy, default_policy, policy_gate
 from janreth.security.provenance import is_trusted_mcp, tool_origins
+from janreth.security.redaction import redactor_after_tool, redactor_before_llm
+from janreth.security.sandbox import sandbox_policy_before_tool
+from janreth.security.sanitize import memory_guard_after_tool, sanitizer_after_tool
 from janreth.security.taxonomy import CONTROLS, ControlSpec, coverage
 
 __all__ = [
@@ -45,6 +55,7 @@ __all__ = [
     "AuditTrail",
     "ToolPolicy",
     "default_policy",
+    "policy_gate",
     "apply_confirmation_policy",
     "is_high_impact",
     "ScopeToken",
@@ -58,6 +69,17 @@ __all__ = [
     "CONTROLS",
     "ControlSpec",
     "coverage",
+    # Individual control callbacks (for hand-wiring via Agent(**...) or audits)
+    "audit_before_llm",
+    "audit_before_tool",
+    "audit_after_tool",
+    "injection_before_llm",
+    "injection_after_tool",
+    "redactor_before_llm",
+    "redactor_after_tool",
+    "sandbox_policy_before_tool",
+    "sanitizer_after_tool",
+    "memory_guard_after_tool",
 ]
 
 

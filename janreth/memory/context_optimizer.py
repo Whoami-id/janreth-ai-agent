@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import inspect
 import json
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional
 
 from janreth.context import ExecutionContext
 from janreth.types import ContentItem, Message, ToolCall, ToolResult
@@ -107,7 +107,6 @@ TOOLCALL_COMPACTION_RULES = {
 
 # Tools to compress ToolResult content
 TOOLRESULT_COMPACTION_RULES = {
-    "read_file": "File content from {file_path}. Re-read if needed.",
     "search_web": "Search results processed. Query: {query}. Re-search if needed.",
     "tavily_search": "Search results processed. Query: {query}. Re-search if needed.",
 }

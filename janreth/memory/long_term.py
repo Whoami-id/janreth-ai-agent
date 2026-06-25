@@ -2,18 +2,22 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import chromadb
 from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
 from pydantic import BaseModel, Field
 
+from janreth.config import embedding_model as default_embedding_model
 from janreth.context import ExecutionContext
 from janreth.types import Event, Message, ToolCall, ToolResult
 
 if TYPE_CHECKING:
     from janreth.llm import LlmClient
+
+logger = logging.getLogger(__name__)
 
 
 class TaskMemory(BaseModel):
@@ -79,14 +83,14 @@ class TaskMemoryManager:
         self,
         llm_client: "LlmClient",
         collection_name: str = "task_memories",
+        embedding_model: str | None = None,
     ):
         self.llm_client = llm_client
+        self.embedding_model = embedding_model or default_embedding_model()
 
         # ChromaDB setup
         self.client = chromadb.Client()
-        embedding_fn = OpenAIEmbeddingFunction(
-            model_name="text-embedding-3-small"
-        )
+        embedding_fn = OpenAIEmbeddingFunction(model_name=self.embedding_model)
         self.collection = self.client.get_or_create_collection(
             name=collection_name,
             embedding_function=embedding_fn,
@@ -103,7 +107,7 @@ class TaskMemoryManager:
                 response_format=TaskMemory,
             )
         except Exception as e:
-            print(f"Memory extraction failed: {e}")
+            logger.warning("Memory extraction failed: %s", e, exc_info=True)
             return None
 
     def _format_execution_history(self, events: list[Event]) -> str:

@@ -1,3 +1,15 @@
+"""Load tools from an MCP (Model Context Protocol) server.
+
+Supports three transports via the ``transport`` argument:
+
+- ``"stdio"`` (default): launch a local subprocess server; ``connection`` is
+  ``{"command": ..., "args": [...], "env": {...}}``.
+- ``"sse"``: connect to a running HTTP server over Server-Sent Events;
+  ``connection`` is ``{"url": ..., "headers": {...}}``.
+- ``"streamable_http"``: the modern streamable-HTTP transport; same
+  ``{"url": ..., "headers": {...}}`` shape.
+"""
+
 from contextlib import asynccontextmanager
 
 from mcp import ClientSession, StdioServerParameters
@@ -17,15 +29,42 @@ def _extract_text_content(result) -> str:
     return "\n".join(parts)
 
 
-def _create_mcp_tool(mcp_tool, connection: dict) -> FunctionTool:
+@asynccontextmanager
+async def _mcp_session(connection: dict, transport: str = "stdio"):
+    """Open an initialized MCP ClientSession over the chosen transport."""
+    if transport == "stdio":
+        client_cm = stdio_client(StdioServerParameters(**connection))
+    elif transport == "sse":
+        from mcp.client.sse import sse_client
+
+        client_cm = sse_client(connection["url"], headers=connection.get("headers"))
+    elif transport in ("streamable_http", "http"):
+        from mcp.client.streamable_http import streamablehttp_client
+
+        client_cm = streamablehttp_client(
+            connection["url"], headers=connection.get("headers")
+        )
+    else:
+        raise ValueError(
+            f"unknown MCP transport {transport!r}; "
+            "use 'stdio', 'sse', or 'streamable_http'"
+        )
+
+    async with client_cm as streams:
+        # stdio/sse yield (read, write); streamable_http yields a 3rd session-id item.
+        read, write = streams[0], streams[1]
+        async with ClientSession(read, write) as session:
+            await session.initialize()
+            yield session
+
+
+def _create_mcp_tool(mcp_tool, connection: dict, transport: str = "stdio") -> FunctionTool:
     """Create a FunctionTool that wraps an MCP tool."""
 
     async def call_mcp(**kwargs):
-        async with stdio_client(StdioServerParameters(**connection)) as (read, write):
-            async with ClientSession(read, write) as session:
-                await session.initialize()
-                result = await session.call_tool(mcp_tool.name, kwargs)
-                return _extract_text_content(result)
+        async with _mcp_session(connection, transport) as session:
+            result = await session.call_tool(mcp_tool.name, kwargs)
+            return _extract_text_content(result)
 
     tool_definition = {
         "type": "function",
@@ -44,28 +83,25 @@ def _create_mcp_tool(mcp_tool, connection: dict) -> FunctionTool:
     )
 
 
-async def load_mcp_tools(connection: dict) -> list[BaseTool]:
-    """Load tools from an MCP server and convert to FunctionTools.
+async def load_mcp_tools(connection: dict, transport: str = "stdio") -> list[BaseTool]:
+    """Load tools from an MCP server and convert them to FunctionTools.
 
-    Matches  . Each MCP tool becomes a FunctionTool that
-    re-establishes the connection on each invocation.
+    Each MCP tool becomes a FunctionTool that re-establishes the connection on
+    each invocation. ``transport`` is ``"stdio"`` (default), ``"sse"``, or
+    ``"streamable_http"`` — see the module docstring for the ``connection`` shape.
     """
     tools: list[BaseTool] = []
 
-    async with stdio_client(StdioServerParameters(**connection)) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            mcp_tools = await session.list_tools()
-
-            for mcp_tool in mcp_tools.tools:
-                func_tool = _create_mcp_tool(mcp_tool, connection)
-                tools.append(func_tool)
+    async with _mcp_session(connection, transport) as session:
+        mcp_tools = await session.list_tools()
+        for mcp_tool in mcp_tools.tools:
+            tools.append(_create_mcp_tool(mcp_tool, connection, transport))
 
     return tools
 
 
 def mcp_tools_to_openai_format(mcp_tools) -> list[dict]:
-    """Convert MCP tool definitions to OpenAI tool format ( )."""
+    """Convert MCP tool definitions to OpenAI tool format."""
     return [
         format_tool_definition(
             name=tool.name,
@@ -77,21 +113,18 @@ def mcp_tools_to_openai_format(mcp_tools) -> list[dict]:
 
 
 @asynccontextmanager
-async def mcp_connection(connection: dict):
-    """Context manager for maintaining an MCP server connection.
+async def mcp_connection(connection: dict, transport: str = "stdio"):
+    """Context manager for a live MCP server session over the chosen transport.
 
-    Usage:
+    Usage::
+
         async with mcp_connection({"command": "npx", "args": [...]}) as session:
             tools = await session.list_tools()
             result = await session.call_tool("tool_name", arguments={...})
-    """
-    server_params = StdioServerParameters(
-        command=connection["command"],
-        args=connection.get("args", []),
-        env=connection.get("env"),
-    )
 
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            await session.initialize()
-            yield session
+        async with mcp_connection({"url": "http://localhost:3000/mcp"},
+                                  transport="streamable_http") as session:
+            ...
+    """
+    async with _mcp_session(connection, transport) as session:
+        yield session

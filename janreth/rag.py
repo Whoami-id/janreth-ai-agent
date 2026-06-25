@@ -4,10 +4,16 @@ from openai import OpenAI
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+from janreth.config import embedding_model
 
-def get_embeddings(texts, model="text-embedding-3-small") -> np.ndarray:
-    """Convert text to embedding vectors."""
+
+def get_embeddings(texts, model: str | None = None) -> np.ndarray:
+    """Convert text to embedding vectors.
+
+    ``model`` defaults to ``JANRETH_EMBEDDING_MODEL`` (see ``janreth.config``).
+    """
     client = OpenAI()
+    model = model or embedding_model()
     if isinstance(texts, str):
         texts = [texts]
 

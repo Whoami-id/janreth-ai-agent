@@ -1,4 +1,4 @@
-"""LLM communication layer for the scratch_agents framework."""
+"""LLM communication layer for the janreth framework (LiteLLM-backed)."""
 
 from __future__ import annotations
 
@@ -144,6 +144,9 @@ class LlmClient:
 
     def _parse_response(self, response) -> LlmResponse:
         """Convert API response to LlmResponse."""
+        if not getattr(response, "choices", None):
+            return LlmResponse(error_message="LLM response contained no choices")
+
         choice = response.choices[0]
         content_items = []
 
@@ -155,16 +158,23 @@ class LlmClient:
 
         if choice.message.tool_calls:
             for tc in choice.message.tool_calls:
+                try:
+                    arguments = json.loads(tc.function.arguments)
+                except (json.JSONDecodeError, TypeError):
+                    # Malformed tool arguments: keep the call with empty args so
+                    # the agent's tool-error path handles it, rather than crash.
+                    arguments = {}
                 content_items.append(ToolCall(
                     tool_call_id=tc.id,
                     name=tc.function.name,
-                    arguments=json.loads(tc.function.arguments),
+                    arguments=arguments,
                 ))
 
+        usage = getattr(response, "usage", None)
         return LlmResponse(
             content=content_items,
             usage_metadata={
-                "input_tokens": response.usage.prompt_tokens,
-                "output_tokens": response.usage.completion_tokens,
+                "input_tokens": getattr(usage, "prompt_tokens", 0),
+                "output_tokens": getattr(usage, "completion_tokens", 0),
             },
         )

@@ -7,7 +7,7 @@ Maps to T8 Repudiation & Untraceability / STRIDE Repudiation.
 
 from __future__ import annotations
 
-from janreth import Agent, tool
+from janreth import tool
 from janreth.security import get_audit, secure_agent
 from attacks.runner import AttackResult, ScriptedLlm, final, run_agent, tool_call
 

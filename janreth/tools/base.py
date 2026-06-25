@@ -1,12 +1,11 @@
-"""Base tool abstraction for the scratch_agents framework."""
+"""Base tool abstraction for the janreth framework."""
 
 from __future__ import annotations
 
 import inspect
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Type
+from typing import TYPE_CHECKING, Any, Callable, Dict
 
-from pydantic import BaseModel
 
 from janreth.tools.helpers import format_tool_definition, function_to_input_schema
 from janreth.context import ExecutionContext
@@ -53,7 +52,7 @@ class BaseTool(ABC):
         context: "ExecutionContext",
         request: "LlmRequest",
     ) -> None:
-        """Hook for tools to modify the LlmRequest before it is sent ()."""
+        """Hook for tools to modify the LlmRequest before it is sent."""
         return None
 
     @abstractmethod

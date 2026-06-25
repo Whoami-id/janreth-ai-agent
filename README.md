@@ -93,17 +93,38 @@ guarantee. Specifically:
 - A determined prompt-injection or novel obfuscation can evade rule-based
   screening. Treat these controls as defense in depth, not a perimeter.
 
+## Connecting to MCP servers and other agents
+
+- **MCP tools** — `load_mcp_tools(connection, transport=...)` loads tools from an
+  MCP server over `stdio` (default), `sse`, or `streamable_http`. Tool provenance
+  is recorded and MCP discovery can be restricted to a trusted-server allow-list
+  (`is_trusted_mcp`).
+- **A2A (agent-to-agent)** — `RemoteAgent` (client) and `AgentExecutorImpl`
+  (server) speak A2A over HTTP. When a shared key is configured, every reply is
+  **HMAC-signed on send and verified on receive** (`sign`/`verify` in
+  `janreth.security.identity`), so a forged or tampered peer reply is rejected
+  rather than returned. See `examples/a2a_signing.py`.
+
+## Configuration
+
+All optional, with sensible defaults — set via the environment:
+
+- `JANRETH_EMBEDDING_MODEL` — embedding model for RAG + long-term memory
+  (default `text-embedding-3-small`); point it at any provider your backend accepts.
+- `JANRETH_A2A_SHARED_KEY` — shared HMAC key for A2A signing. Unset ⇒ signing is
+  dormant and peer replies are not authenticated (a warning is logged).
+- `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` — to run a real agent; tests and attacks
+  need neither.
+
 ## Install
 
 ```
 uv sync                                  # or: pip install -e .
 uv run pytest                            # the security test suite
 uv run python -m attacks                 # the attack report
-uv run python scripts/check_voice.py     # the voice/lexicon gate
 ```
 
-Requires Python 3.13+. Set provider keys (`ANTHROPIC_API_KEY` / `OPENAI_API_KEY`)
-to run a real agent; the tests and attacks need neither.
+Requires Python 3.13+.
 
 ## Layout
 
@@ -113,8 +134,8 @@ janreth/
   tools/  memory/  rag.py  transfer.py  remote.py  workflows/
   security/        # the control set + taxonomy + secure_defaults/secure_agent
 attacks/           # the ethical attack suite (== the security tests)
-examples/          # secure_agent.py: what a Janreth agent reads like
-scripts/           # coverage_matrix.py, check_voice.py
+examples/          # secure_agent.py (canonical usage) + a2a_signing.py (signed A2A)
+scripts/           # coverage_matrix.py
 ```
 
 ## Origins

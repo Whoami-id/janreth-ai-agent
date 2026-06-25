@@ -1,4 +1,4 @@
-"""Core Agent class for the scratch_agents framework."""
+"""Core Agent class for the janreth framework."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING, Any, Callable, List, Optional, Type
 from pydantic import BaseModel
 
 from janreth.llm import LlmClient, LlmRequest, LlmResponse
-from janreth.tools.base import BaseTool, FunctionTool, tool
+from janreth.tools.base import BaseTool, FunctionTool
 from janreth.tools.helpers import format_tool_definition
 from janreth.context import (
     AgentResult,
@@ -176,7 +176,12 @@ class Agent:
             return AgentResult(output=context.final_result, context=context)
         finally:
             if context.code_env is not None:
-                context.code_env.kill()
+                try:
+                    context.code_env.kill()
+                except Exception as e:
+                    logger.warning("Failed to kill code-execution sandbox: %s", e)
+                finally:
+                    context.code_env = None
 
     async def step(
         self,
@@ -334,7 +339,7 @@ class Agent:
             )
             context.add_event(tool_event)
 
-        # Handle transfer_to ()
+        # Handle transfer_to
         for result in results:
             if result.name == "transfer_to_agent" and result.status == "success":
                 # The transfer tool sets context.transfer_to
@@ -358,12 +363,12 @@ class Agent:
         if self.instructions:
             instructions.append(self.instructions)
 
-        # Add sandbox tools prompt ()
+        # Add sandbox tools prompt
         sandbox_prompt = self._get_sandbox_tools_prompt()
         if sandbox_prompt:
             instructions.append(sandbox_prompt)
 
-        # Add skills prompt if available ()
+        # Add skills prompt if available
         if self.skills_path:
             try:
                 from janreth.skills import discover_skills, generate_skills_prompt
@@ -374,7 +379,7 @@ class Agent:
             except Exception:
                 pass
 
-        # Filter tools that should be exposed to the LLM ()
+        # Filter tools that should be exposed to the LLM
         llm_tools = [t for t in self.tools if t.tool_definition is not None]
 
         # Determine tool choice strategy
@@ -393,7 +398,7 @@ class Agent:
             tool_choice=tool_choice,
         )
 
-        # Let tools modify the request ()
+        # Let tools modify the request
         for tool_obj in self.tools:
             await tool_obj.process_llm_request(context, request)
 
@@ -436,7 +441,7 @@ class Agent:
         """Prepare the tools list, including dynamic tools."""
         tools = list(tools)  # Copy to avoid modifying original
 
-        # Add structured output tool ()
+        # Add structured output tool
         if self.output_type is not None:
             output_schema = self.output_type.model_json_schema()
             output_schema.pop("title", None)
@@ -468,7 +473,7 @@ class Agent:
             tools.append(final_answer_tool)
             self.output_tool_name = "final_answer"
 
-        # Collect sandbox-executable tools ()
+        # Collect sandbox-executable tools
         invalid_sandbox_tools = []
         for t in tools:
             if not isinstance(t, FunctionTool) or not t.sandbox_executable:
@@ -484,18 +489,18 @@ class Agent:
                 "but code_execution is not enabled."
             )
 
-        # Add code execution tool ()
+        # Add code execution tool
         if self.code_execution == "e2b":
             from janreth.tools.code_execution import execute_python
             tools.append(execute_python)
 
-        # Add transfer tool ()
+        # Add transfer tool
         if self.sub_agents:
             from janreth.transfer import create_transfer_tool
             transfer_tool = create_transfer_tool(self.sub_agents)
             tools.append(transfer_tool)
 
-        # Add memory tool if memory_manager is available ()
+        # Add memory tool if memory_manager is available
         if self.memory_manager:
             from janreth.tools.memory_tool import MemoryTool
             tools.append(MemoryTool())
@@ -503,7 +508,12 @@ class Agent:
         return tools
 
     async def _setup_code_env(self, context: ExecutionContext):
-        """Set up E2B sandbox environment ()."""
+        """Set up the E2B sandbox environment.
+
+        Fails loudly: if the sandbox cannot be created we refuse to continue
+        rather than silently degrade to running code tools without the sandbox
+        boundary (which would defeat SandboxPolicy and the isolation guarantee).
+        """
         try:
             from e2b_code_interpreter import Sandbox
             sandbox = Sandbox.create(timeout=300)
@@ -522,10 +532,13 @@ class Agent:
                         skill_info.path.read_text(),
                     )
         except Exception as e:
-            logger.warning(f"Failed to set up code execution environment: {e}")
+            raise RuntimeError(
+                "Failed to set up the E2B code-execution sandbox; refusing to run "
+                f"code tools without the sandbox boundary. Original error: {e}"
+            ) from e
 
     def _register_sandbox_tools(self, sandbox) -> None:
-        """Register sandbox-executable tools by running their source in the sandbox ()."""
+        """Register sandbox-executable tools by running their source in the sandbox."""
         tool_sources = []
         for t in self._sandbox_tools:
             source = t.get_source_code()
@@ -536,7 +549,7 @@ class Agent:
             raise RuntimeError(f"Failed to register sandbox tools: {result.error}")
 
     def _get_sandbox_tools_prompt(self) -> str:
-        """Generate prompt describing sandbox-executable tools ()."""
+        """Generate prompt describing sandbox-executable tools."""
         if not self._sandbox_tools:
             return ""
         tool_definitions = [t.tool_definition for t in self._sandbox_tools]
@@ -550,7 +563,7 @@ class Agent:
 
     #  multi-agent helpers
     def _get_transfer_targets(self) -> list["Agent"]:
-        """List of targets the current agent can transfer to ()."""
+        """List of targets the current agent can transfer to."""
         targets: list["Agent"] = []
 
         # 1. Children
@@ -568,14 +581,14 @@ class Agent:
         return targets
 
     def _find_agent(self, name: str) -> "Agent" | None:
-        """Search by name across the entire agent tree ()."""
+        """Search by name across the entire agent tree."""
         root = self
         while root.parent:
             root = root.parent
         return root._find_in_subtree(name)
 
     def _find_in_subtree(self, name: str) -> "Agent" | None:
-        """Search in current agent and subtree ()."""
+        """Search in current agent and subtree."""
         if self.name == name:
             return self
         for sub in self.sub_agents:
@@ -584,7 +597,7 @@ class Agent:
         return None
 
     def _validate_and_set_sub_agents(self) -> None:
-        """Validate name/parent duplicates in sub_agents and set parent ()."""
+        """Validate name/parent duplicates in sub_agents and set parent."""
         seen_names = set()
         for sub in self.sub_agents:
             if sub.name in seen_names:
@@ -602,7 +615,7 @@ class Agent:
         context: ExecutionContext,
         confirmations: list[ToolConfirmation],
     ):
-        """Process tool confirmations from human-in-the-loop ()."""
+        """Process tool confirmations from human-in-the-loop."""
         raw_pending = context.state.pop("pending_tool_calls", [])
         pending = [PendingToolCall.model_validate(d) for d in raw_pending]
 

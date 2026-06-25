@@ -38,3 +38,6 @@ ATTACKS = [
 def run_all() -> list[AttackResult]:
     """Run every registered attack and return the results."""
     return [module.run() for module in ATTACKS]
+
+
+__all__ = ["ATTACKS", "AttackResult", "ETHICAL_NOTE", "run_all"]
